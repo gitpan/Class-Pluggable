@@ -57,7 +57,7 @@ BEGIN { use_ok('Class::Pluggable') };
 
 my $sample = new SamplePluggable();
 
-is (scalar $sample->getPlugins(), 0, "initial size of plugins");
+is (scalar($sample->getPlugins()), 0, "initial size of plugins");
 
 $sample->addPlugin("APlugin");
 

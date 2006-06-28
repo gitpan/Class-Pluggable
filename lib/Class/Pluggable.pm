@@ -2,24 +2,30 @@ package Class::Pluggable;
 
 use 5.008006;
 use strict;
-#no strict 'refs';
 use warnings;
 use Carp;
 
-## Don't need this for now.
-#require Exporter;
-#our @ISA = qw(Exporter);
-#our @EXPORT_OK = ( );
-#our @EXPORT = qw( );
-##
+our $VERSION = '0.021';
 
-our $VERSION = '0.02';
+sub import {
+  my ($self) = @_;
+  my @plugins = ();
+  my $package = __PACKAGE__;
 
+  { ## Create closure that returns array reference for the plugins.
+	no strict "refs";
+	if (not defined &{"${package}::_getPlugins"}) {
+	  *{"${package}::_getPlugins"} = sub {
+		return \@plugins;
+	  }
+	}
+  }
+}
 
 sub addPlugin {
 	my ($self, $plugin) = @_;
 
-	push @{$self->{_PLUGINS}}, $plugin;
+	push @{$self->_getPlugins()}, $plugin;
 
 	{
 	  no strict 'refs';
@@ -30,10 +36,7 @@ sub addPlugin {
 
 
 sub getPlugins {
-  my $self = shift;
-  $self->{_PLUGINS} = [] if not defined $self->{_PLUGINS};
-
-  return @{$self->{_PLUGINS}};
+  return @{$_[0]->_getPlugins()};
 }
 
 
@@ -41,9 +44,9 @@ sub addHook {
   my ($self, $hook, $method) = @_;
 
   if (defined ${$self->{_HOOK}}{$hook}) {
-	warn("The hook ($hook) already in used. It will overwrite with new method.");
+	carp("The hook ($hook) already in used. It will overwrite with new method.");
   }
-  
+
   ${$self->{_HOOK}}{$hook} = $method;
 }
 
@@ -73,7 +76,7 @@ sub executePluginMethod {
 	my $result;
 
 	if (defined &{"${plugin}::$method"}) {
-	  # Adding $self to make the plugin method looks like object method.
+	  # Give $self to make the plugin method looks like object method.
 	  {
 		no strict 'refs';
 		$result = &{"${plugin}::$method"}($self, @args);
@@ -91,7 +94,6 @@ sub executeAllPluginsMethod {
 
 1;
 __END__
-# Below is stub documentation for your module. You'd better edit it!
 
 =head1 NAME
 
