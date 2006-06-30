@@ -2,7 +2,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 ######################## APlugin
 package APlugin;
@@ -55,13 +55,24 @@ BEGIN { use_ok('Class::Pluggable') };
 #use SamplePluggable;
 
 
+# Two of SamplePluggable instance shouldn't effect each other.
 my $sample = new SamplePluggable();
+my $sample2 = new SamplePluggable();
 
-is (scalar($sample->getPlugins()), 0, "initial size of plugins");
 
-$sample->addPlugin("APlugin");
+# These are only for checking the effectivity between $sample
+# and $sample2.
+$sample2->add_plugin("APlugin");
+$sample2->add_plugin("BPlugin");
 
-is (scalar $sample->getPlugins(), 1, "final size of plugins");
+is (scalar($sample->get_plugins()), 0, "initial size of plugins");
+
+$sample->add_plugin("APlugin");
+#SamplePluggable->add_plugin("APlugin");
+
+is (scalar $sample->get_plugins(), 1, "final size of plugins");
+
+can_ok ($sample, qw(foo bar hoge));
 
 is ("hello", $sample->hello(), 'original method');
 is ("foo",   $sample->foo(),   'plugged method(foo)');
@@ -69,23 +80,23 @@ is ("bar",   $sample->bar(),   'plugged method(bar)');
 is ("hoge",  $sample->hoge(),  'plugged method(hoge)');
 
 is ("Plugin::APlugin::beforeAction",
-    $sample->executePluginMethod("APlugin", "beforeAction"), "hook test");
+    $sample->execute_plugin_method("APlugin", "beforeAction"), "hook test");
 is ("Plugin::APlugin::afterAction",
-    $sample->executePluginMethod("APlugin", "afterAction"), "hook test");
+    $sample->execute_plugin_method("APlugin", "afterAction"), "hook test");
 
 ## This method doesn't exists.
 ## So, it should return undef.
 
 is (undef,
-    $sample->executePluginMethod("APlugin", "methodWhichDoesntExists"),
+    $sample->execute_plugin_method("APlugin", "methodWhichDoesntExists"),
 	"non-exists hook");
 
-$sample->addHook('hook', 'sampleHook');
-$sample->runHook('hook');
-$sample->runHook('hook');
+$sample->add_hook('hook', 'sampleHook');
+$sample->run_hook('hook');
+$sample->run_hook('hook');
 
 eval { ## This should die. Because of the hook doesn't exists.
-	 $sample->runHook('hoo2');
+	 $sample->run_hook('hoo2');
 };
 if ($@) {
    pass("Executing hook doesn't exists.");

@@ -4,6 +4,4 @@ MANIFEST
 README
 lib/Class/Pluggable.pm
 t/Class-Pluggable.t
-t/SamplePluggable.pm
-t/APlugin.pm
 META.yml                                 Module meta-data (added by MakeMaker)
